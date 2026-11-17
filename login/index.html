@@ -185,18 +185,18 @@
 
             <!-- 1: course key and username -->
             <form class="step" id="step-account" novalidate hidden>
-                <h2>Kurs und Benutzername</h2>
+                <!-- <h2>Kurs und Benutzername</h2> -->
                 <div class="field">
                     <label for="username">Benutzername</label>
                     <div class="hint">
-                        Frei gewählt, zum Beispiel ein Spitzname. Bitte nicht Ihr Name oder Ihre Matrikelnummer.
+                        Diesen können sie frei wählen, allerdings ist jeder Benutzername lediglich einmal verfügbar und wird später mit ihrem persönlichen Code verknüpft. Sie sollten sich ihn merken.
                     </div>
-                    <input type="text" id="username" placeholder="z. B. resonanz42" maxlength="100"
+                    <input type="text" id="username" placeholder="z. B. FrankTenpenny" maxlength="100"
                            autocomplete="username" autocapitalize="none" spellcheck="false" required>
                 </div>
                 <div class="field">
                     <label for="key">Kursschlüssel</label>
-                    <div class="hint">Sie finden ihn im ILIAS-Kurs des Praktikums.</div>
+                    <div class="hint">Fragen Sie bei Bedarf die Kursverantwortlichen.</div>
                     <input type="password" id="key" autocomplete="off" required>
                 </div>
                 <div class="message" id="account-message" role="alert"></div>
