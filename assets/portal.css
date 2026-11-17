@@ -1,0 +1,424 @@
+/* Shared by the landing page (index.html) and the login page (login/). Standalone on purpose: no build, no
+   dependencies. Colours, header, footer and theme follow the modules (frontend/src/styles.css there); the theme
+   is stored under 'theme' like in the modules, so a choice made here carries over. */
+
+:root {
+    --uni-blau-1: rgb(21, 50, 104);
+    --uni-blau-2: rgb(0, 95, 155);
+    --uni-blau-3: rgb(0, 145, 200);
+    --uni-blau-4: rgb(80, 165, 210);
+    --grau-20: rgb(217, 218, 218);
+    --grau-80: rgb(87, 87, 86);
+
+    --bg-primary: #f0f2f5;
+    --bg-secondary: rgb(245, 243, 240);
+    --bg-main: #f8f9fb;
+    --card-bg: #ffffff;
+    --text-primary: var(--uni-blau-1);
+    --text-secondary: var(--uni-blau-2);
+    --text-muted: var(--grau-80);
+    --border-color: rgba(21, 50, 104, 0.08);
+    --border-soft: var(--grau-20);
+    --shadow-color: rgba(21, 50, 104, 0.12);
+    --surface-option: #f4f7fb;
+    --surface-option-hover: #e9f1fa;
+    --button-color: var(--bg-primary);
+    --button-color-hover: var(--card-bg);
+    --button-border-color: var(--uni-blau-1);
+    --button-text-color: var(--uni-blau-1);
+    --card-accent: var(--uni-blau-3);
+}
+
+[data-theme="dark"] {
+    --bg-primary: #111827;
+    --bg-secondary: #0f172a;
+    --bg-main: #182234;
+    --card-bg: #1e293b;
+    --text-primary: rgb(226, 232, 240);
+    --text-secondary: rgb(148, 163, 184);
+    --text-muted: rgb(148, 163, 184);
+    --border-color: rgba(148, 163, 184, 0.12);
+    --border-soft: rgba(148, 163, 184, 0.25);
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    --surface-option: rgba(148, 163, 184, 0.10);
+    --surface-option-hover: rgba(148, 163, 184, 0.18);
+    --button-color: var(--bg-primary);
+    --button-color-hover: var(--card-bg);
+    --button-border-color: white;
+    --button-text-color: white;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 15px base as in the modules; phones keep 16px */
+html {
+    font-size: 93.75%;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1rem;
+    line-height: 2;
+    color: var(--text-primary);
+    background: var(--bg-main);
+    text-align: justify;
+    hyphens: auto;
+}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+header {
+    background: var(--uni-blau-1);
+    color: white;
+    padding: 0.8rem 1.5rem;
+    line-height: 1.5;
+    hyphens: manual;
+}
+
+.header-content {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.6rem;
+    padding-right: 3rem;
+}
+
+.header-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.header-subtitle {
+    margin-left: 0.25rem;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.header-lines {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.line {
+    height: 5px;
+}
+
+.line-1 { background: var(--uni-blau-3); }
+.line-i { height: 2px; background: var(--bg-secondary); }
+.line-2 { background: var(--uni-blau-2); }
+
+.theme-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    display: flex;
+    padding: 0.25rem;
+    color: white;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle:hover {
+    transform: translateY(-50%) scale(1.2);
+}
+
+.theme-toggle svg {
+    width: 24px;
+    height: 24px;
+}
+
+.icon-moon { display: none; }
+[data-theme="dark"] .icon-sun { display: none; }
+[data-theme="dark"] .icon-moon { display: block; }
+
+/* ── Main column ────────────────────────────────────────────────── */
+main {
+    flex: 1;
+}
+
+.card {
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 3.5rem;
+}
+
+h1, h2, h3 {
+    color: var(--text-primary);
+    font-weight: 600;
+    text-align: left;
+    hyphens: manual;
+}
+
+h1 {
+    font-size: 2rem;
+    line-height: 1.4;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+    line-height: 1.4;
+    margin: 3rem 0 1rem;
+    color: var(--text-secondary);
+}
+
+p + p {
+    margin-top: 1rem;
+}
+
+a {
+    color: var(--uni-blau-2);
+    text-decoration: none;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.3s ease;
+}
+
+a:hover {
+    border-bottom-color: var(--uni-blau-3);
+}
+
+[data-theme="dark"] a {
+    color: var(--uni-blau-4);
+}
+
+/* ── Footer, as in the modules ──────────────────────────────────── */
+footer {
+    padding: 0.5rem 1.5rem;
+    background: var(--bg-primary);
+    border-top: 2px solid var(--border-color);
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.footer-department {
+    opacity: 0.9;
+}
+
+.footer-link,
+[data-theme="dark"] .footer-link {
+    color: inherit;
+    font-weight: inherit;
+    border-bottom: none;
+}
+
+.footer-link:hover,
+.footer-link:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* ── Login state, above the page's heading ──────────────────────────── */
+.auth-status {
+    min-height: 2rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    text-align: left;
+}
+
+.auth-status strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.link-button {
+    padding: 0;
+    font: inherit;
+    font-weight: 500;
+    color: var(--uni-blau-2);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.link-button:hover,
+.link-button:focus-visible {
+    border-bottom-color: var(--uni-blau-3);
+}
+
+[data-theme="dark"] .link-button {
+    color: var(--uni-blau-4);
+}
+
+/* ── Buttons, as the modules' .btn ─────────────────────────────────── */
+.btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: center;
+    color: var(--button-text-color);
+    background: var(--button-color);
+    border: 2px solid var(--button-border-color);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+a.btn {
+    border-bottom: 2px solid var(--button-border-color);
+}
+
+.btn:hover,
+a.btn:hover {
+    color: var(--button-text-color);
+    background: var(--button-color-hover);
+}
+
+.btn:focus-visible {
+    outline: 3px solid var(--uni-blau-3);
+    outline-offset: 2px;
+}
+
+/* greyed out, never hidden: the button shows there is a way on and what blocks it */
+.btn:disabled {
+    color: white;
+    background: rgb(135, 135, 134);
+    border-color: rgb(135, 135, 134);
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* the quiet alternative next to the main button */
+.btn-quiet {
+    color: var(--text-secondary);
+    background: transparent;
+    border-color: var(--border-soft);
+    box-shadow: none;
+}
+
+.btn-quiet:hover {
+    color: var(--text-primary);
+    background: var(--surface-option);
+}
+
+/* ── Form fields ──────────────────────────────────────────────────────── */
+.field {
+    margin-bottom: 1.25rem;
+    text-align: left;
+}
+
+.field label,
+.field .label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.field .hint {
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.field input[type="text"],
+.field input[type="password"],
+.field select {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background: var(--card-bg);
+    border: 1.5px solid var(--border-soft);
+    border-radius: 6px;
+    transition: border-color 0.2s ease;
+}
+
+.field input:focus,
+.field select:focus {
+    outline: none;
+    border-color: var(--uni-blau-3);
+    box-shadow: 0 0 0 3px rgba(0, 145, 200, 0.2);
+}
+
+.field input.invalid,
+.field select.invalid {
+    border-color: rgb(199, 13, 45);
+}
+
+/* ── Messages ─────────────────────────────────────────────────────────── */
+.message {
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    line-height: 1.6;
+    text-align: left;
+    border-radius: 8px;
+    border-left: 4px solid var(--uni-blau-3);
+    background: var(--surface-option);
+}
+
+.message.error {
+    border-left-color: rgb(199, 13, 45);
+}
+
+.message:empty {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    html {
+        font-size: 100%;
+    }
+
+    body {
+        text-align: left;
+        overflow-wrap: break-word;
+    }
+
+    header {
+        padding: 0.8rem 1rem;
+    }
+
+    .header-title {
+        font-size: 1.05rem;
+    }
+
+    .header-subtitle {
+        margin-left: 0;
+        font-size: 0.85rem;
+    }
+
+    .card {
+        padding: 2rem 1rem 3rem;
+    }
+
+    h1 {
+        font-size: 1.6rem;
+    }
+
+    footer {
+        padding: 0.5rem 1rem;
+    }
+}

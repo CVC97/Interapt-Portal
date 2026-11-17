@@ -1,0 +1,51 @@
+# Deploys the portal to the server root on push to master (or by hand: Actions → Deploy portal → Run workflow).
+#
+# The server root also holds the modules (pohl/, precession/), deployed by their own repositories. So nothing
+# here mirrors the root itself: only the portal's own files and folders are uploaded, and --delete works inside
+# login/, assets/ and api/ only. api/config.php lives on the server alone and is never uploaded or deleted.
+#
+# Secrets (GitHub → Settings → Secrets and variables → Actions), the same server as the modules':
+#   SFTP_HOST, SFTP_PORT, SFTP_USER, SFTP_PASS
+#   SFTP_ROOT_DIR  — absolute remote path of the server root, the folder that holds pohl/ and precession/
+
+name: Deploy portal
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install lftp
+        run: sudo apt-get install -y lftp
+
+      # Development files stay out of this throwaway checkout, so --delete also removes them from the server.
+      - name: Drop development files
+        run: rm -f api/schema.sql api/router.php api/config.example.php
+
+      - name: Upload to the server root
+        env:
+          SFTP_HOST: ${{ secrets.SFTP_HOST }}
+          SFTP_PORT: ${{ secrets.SFTP_PORT }}
+          SFTP_USER: ${{ secrets.SFTP_USER }}
+          SFTP_PASS: ${{ secrets.SFTP_PASS }}
+          ROOT_DIR: ${{ secrets.SFTP_ROOT_DIR }}
+        run: |
+          lftp -u "$SFTP_USER,$SFTP_PASS" sftp://"$SFTP_HOST":"$SFTP_PORT" << EOF
+          set sftp:connect-program "ssh -a -x -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+          set net:max-retries 2
+          set net:timeout 20
+          put index.html -o $ROOT_DIR/index.html
+          put .htaccess -o $ROOT_DIR/.htaccess
+          mirror -R --delete --verbose assets/ $ROOT_DIR/assets/
+          mirror -R --delete --verbose login/ $ROOT_DIR/login/
+          mirror -R --delete --verbose --exclude ^config\.php\$ api/ $ROOT_DIR/api/
+          bye
+          EOF

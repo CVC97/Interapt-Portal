@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktive Lernmodule – Praktikum zu Experimentalphysik I</title>
+    <!-- Tab icon in the style of the module icons (outer ring, white strokes inside): two orbits around a centre,
+         physics in general rather than one experiment. -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='43' fill='none' stroke='rgb(80,165,210)' stroke-width='12'/%3E%3Cellipse cx='50' cy='50' rx='29' ry='11' fill='none' stroke='white' stroke-width='7' transform='rotate(45 50 50)'/%3E%3Cellipse cx='50' cy='50' rx='29' ry='11' fill='none' stroke='white' stroke-width='7' transform='rotate(-45 50 50)'/%3E%3Ccircle cx='50' cy='50' r='6' fill='rgb(80,165,210)' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
+
+    <!-- Landing page at the server root: leads to the learning modules below it (/pohl/, /precession/, ...).
+         Shared styles in assets/portal.css. To add a module, copy one <a class="module-card"> and adapt it
+         (data-module = the module's name, as listed in login/index.html and api/config.php). Its link goes
+         through the login page; for a student already logged in, straight to the module. -->
+
+    <script>
+        // set the theme before the first paint, so a dark page doesn't flash white
+        try {
+            if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        } catch (e) { /* storage blocked: light */ }
+    </script>
+
+    <link rel="stylesheet" href="assets/portal.css">
+
+    <style>
+        .intro {
+            font-size: 1.05rem;
+        }
+
+        /* ── Spoiler, as in the modules ─────────────────────────────────── */
+        .spoiler {
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            background: var(--card-bg);
+            overflow: hidden;
+        }
+
+        .spoiler-summary {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .spoiler-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .spoiler-summary::after {
+            content: '▾';
+            margin-left: 1rem;
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            transition: transform 0.3s ease;
+        }
+
+        .spoiler-summary:hover {
+            background: var(--surface-option);
+        }
+
+        .spoiler[open] > .spoiler-summary {
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .spoiler[open] > .spoiler-summary::after {
+            transform: rotate(180deg);
+        }
+
+        .spoiler-content {
+            padding: 1.5rem 2rem 2rem;
+            line-height: 1.7;
+        }
+
+        /* ── Module cards ───────────────────────────────────────────────── */
+        /* one module per row, so a new one just goes below the others */
+        .modules {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* the whole card is the link: navy header on top, description below */
+        .modules a.module-card {
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-soft);
+            border-top: 4px solid var(--card-accent);
+            border-radius: 10px;
+            box-shadow: 0 1px 3px var(--shadow-color);
+            overflow: hidden;
+            text-align: left;
+            font-weight: 400;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* as on the modules' decision pages: background and border change, nothing moves */
+        .modules a.module-card:hover,
+        .modules a.module-card:focus-visible {
+            color: var(--text-primary);
+            background: var(--surface-option-hover);
+            border-color: var(--card-accent);
+            border-bottom: 1px solid var(--card-accent);
+        }
+
+        .modules a.module-card:focus-visible {
+            outline: 3px solid var(--uni-blau-3);
+            outline-offset: 3px;
+        }
+
+        /* the top as on the modules' start page: title in the text colour, an italic line below;
+           the icon draws in the text colour too, so it reads in both themes */
+        .module-card-head {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem 1.5rem 0;
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+
+        .module-card-head svg {
+            flex: none;
+            width: 48px;
+            height: 48px;
+        }
+
+        .module-card-title {
+            font-size: 1.35rem;
+            color: var(--text-primary);
+        }
+
+        .module-card-label {
+            margin-top: 0.25rem;
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        .module-card-body {
+            padding: 0.75rem 1.5rem 1.5rem;
+        }
+
+        .module-card-text {
+            line-height: 1.8;
+        }
+
+        .modules-note {
+            margin-top: 1.5rem;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .spoiler-summary {
+                padding: 1rem 1.25rem;
+            }
+
+            .spoiler-content {
+                padding: 1rem 1.25rem 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="header-title">Interaktive Lernmodule</div>
+            <div class="header-subtitle">Praktikum zu Experimentalphysik I</div>
+            <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Farbschema wechseln">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="5"/>
+                    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="header-lines">
+        <div class="line line-1"></div>
+        <div class="line line-i"></div>
+        <div class="line line-2"></div>
+    </div>
+
+    <main>
+        <div class="card">
+            <div class="auth-status" id="auth-status" aria-live="polite"></div>
+            <h1>Interaktive Lernmodule zum Physikpraktikum</h1>
+            <p class="intro">
+                Diese Lernmodule begleiten Sie durch die Versuche im Praktikum zu Experimentalphysik I.
+                Sie bereiten sich interaktiv auf den Versuch vor: Sie beantworten Fragen, arbeiten mit Simulationen
+                und entscheiden zum Teil selbst, welchen Weg Sie durch die Inhalte nehmen.
+                So knüpfen Sie an Ihr Vorwissen an und kommen gut vorbereitet ins Labor.
+            </p>
+
+            <!-- <details class="spoiler">
+                <summary class="spoiler-summary">Über das Projekt</summary>
+                <div class="spoiler-content">
+                    <p>
+                        Das Projekt gestaltet ein Praktikumsmodul für Studierende der Physik neu. Für alle Phasen des
+                        Praktikums, von der Vorbereitung über das Experimentieren bis zur Auswertung, entstehen
+                        interaktive und adaptive Materialien. Sie gehen auf Vorwissen, Interessen und Ziele der
+                        Studierenden ein und ermöglichen individuelle Lernwege.
+                    </p>
+                    <p>
+                        Ziel ist es, Theorie und experimentelle Praxis enger miteinander zu verbinden, Motivation und
+                        Neugier zu fördern und Sie dabei zu unterstützen, schon in der Vorbereitung eigene Hypothesen
+                        zu entwickeln. Das Projekt entsteht in der Arbeitsgruppe
+                        <a href="https://www.uni-goettingen.de/de/110922.html" target="_blank" rel="noopener noreferrer">Physik und ihre Didaktik</a>
+                        der Universität Göttingen.
+                    </p>
+                </div>
+            </details> -->
+
+            <details class="spoiler">
+                <summary class="spoiler-summary">Wie starte ich ein Lernmodul?</summary>
+                <div class="spoiler-content">
+                    <p>
+                        Melden Sie sich einmal mit dem Kursschlüssel aus dem Praktikum, einem selbst gewählten
+                        Benutzernamen und Ihrem persönlichen Code an. Die Anmeldung gilt für alle Lernmodule:
+                        Ihr Fortschritt wird gespeichert, und Sie können später, auch an einem anderen Gerät,
+                        dort weitermachen, wo Sie aufgehört haben.
+                    </p>
+                    <p>
+                        Ohne Kursschlüssel können Sie die Lernmodule als Gast nutzen.
+                        Ihr Fortschritt wird dann nicht gespeichert.
+                    </p>
+                </div>
+            </details>
+
+            <h2>Lernmodule</h2>
+
+            <div class="modules">
+                <a class="module-card" href="login/?next=pohl" data-module="pohl">
+                    <div class="module-card-head">
+                        <svg viewBox="0 0 100 100" aria-hidden="true">
+                            <circle cx="50" cy="50" r="43" fill="none" stroke="rgb(80, 165, 210)" stroke-width="12"/>
+                            <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="10"/>
+                            <circle cx="50" cy="50" r="7" fill="none" stroke="currentColor" stroke-width="7"/>
+                            <line x1="76" y1="35" x2="50" y2="50" stroke="currentColor" stroke-width="10"/>
+                            <line x1="24" y1="35" x2="50" y2="50" stroke="currentColor" stroke-width="10"/>
+                            <line x1="50" y1="50" x2="50" y2="80" stroke="currentColor" stroke-width="10"/>
+                        </svg>
+                        <div>
+                            <h3 class="module-card-title">Pohlscher Resonator</h3>
+                            <div class="module-card-label">Versuch 3</div>
+                        </div>
+                    </div>
+                    <div class="module-card-body">
+                        <p class="module-card-text">
+                            Freie, gedämpfte und angetriebene Schwingungen bis hin zu Resonanz und Phasenverschiebung.
+                            Sie wählen einen Einstieg über den Versuchsaufbau oder über die Theorie und erhalten am Ende
+                            eine auf Ihren Weg zugeschnittene Versuchsanleitung.
+                        </p>
+                    </div>
+                </a>
+
+                <a class="module-card" href="login/?next=precession" data-module="precession">
+                    <div class="module-card-head">
+                        <svg viewBox="0 0 100 100" aria-hidden="true">
+                            <circle cx="50" cy="50" r="43" fill="none" stroke="rgb(80, 165, 210)" stroke-width="12"/>
+                            <ellipse cx="50" cy="55" rx="29" ry="10" fill="none" stroke="currentColor" stroke-width="8" transform="rotate(12 50 55)"/>
+                            <line x1="50" y1="27" x2="50" y2="79" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+                            <circle cx="50" cy="55" r="6" fill="rgb(80, 165, 210)" stroke="currentColor" stroke-width="4"/>
+                        </svg>
+                        <div>
+                            <h3 class="module-card-title">Kreiselpräzession</h3>
+                            <div class="module-card-label">Versuch 4</div>
+                        </div>
+                    </div>
+                    <div class="module-card-body">
+                        <p class="module-card-text">
+                            Die Bewegungsgleichungen starrer, rotierender Körper am Beispiel eines Kreisels.
+                            Schritt für Schritt vom Versuchsaufbau über die Physik der Rotation bis zur Messstrategie,
+                            mit einer 3D-Simulation, in der Sie die Vektoren direkt beobachten können.
+                        </p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- <p class="modules-note">Weitere Lernmodule folgen.</p> -->
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-department">
+                <a href="https://www.uni-goettingen.de/de/110922.html" target="_blank" rel="noopener noreferrer" class="footer-link">Physik und ihre Didaktik</a>
+            </div>
+            <div class="footer-info">© 2026</div>
+        </div>
+    </footer>
+
+    <script>
+        // Login state: logged in → name and Abmelden, module cards straight to the module; otherwise (also when
+        // the server can't be reached) the cards lead through the login page, which also offers the guest way.
+        (function () {
+            var status = document.getElementById('auth-status');
+
+            function showGuest() {
+                status.innerHTML = 'Nicht angemeldet · <a href="login/">Anmelden</a>';
+            }
+
+            function showUser(user) {
+                status.textContent = 'Angemeldet als ';
+                var name = document.createElement('strong');
+                name.textContent = user.username;
+                var logout = document.createElement('button');
+                logout.type = 'button';
+                logout.className = 'link-button';
+                logout.textContent = 'Abmelden';
+                logout.addEventListener('click', function () {
+                    fetch('api/auth/logout', { method: 'POST' }).finally(function () { location.reload(); });
+                });
+                status.append(name, ' · ', logout);
+                document.querySelectorAll('a.module-card[data-module]').forEach(function (card) {
+                    card.href = card.dataset.module + '/';
+                });
+            }
+
+            fetch('api/auth/me', { cache: 'no-store' })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (user) { user ? showUser(user) : showGuest(); })
+                .catch(showGuest);
+        })();
+
+        document.getElementById('theme-toggle').addEventListener('click', function () {
+            var dark = document.documentElement.getAttribute('data-theme') !== 'dark';
+            if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+            else document.documentElement.removeAttribute('data-theme');
+            try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) { /* not remembered */ }
+        });
+    </script>
+</body>
+</html>

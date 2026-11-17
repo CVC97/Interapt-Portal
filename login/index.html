@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anmelden – Interaktive Lernmodule</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='43' fill='none' stroke='rgb(80,165,210)' stroke-width='12'/%3E%3Cellipse cx='50' cy='50' rx='29' ry='11' fill='none' stroke='white' stroke-width='7' transform='rotate(45 50 50)'/%3E%3Cellipse cx='50' cy='50' rx='29' ry='11' fill='none' stroke='white' stroke-width='7' transform='rotate(-45 50 50)'/%3E%3Ccircle cx='50' cy='50' r='6' fill='rgb(80,165,210)' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
+
+    <!-- One login for all learning modules (/login/?next=pohl). ILIAS links here; the modules' old
+         ilias_bridge.html pages redirect here. Steps: course key and username → the personal code (codename.js) →
+         for a new account the read-back and the consent. The server sets a login cookie for the whole site
+         (api/auth/*). Guests go on without an account; nothing of theirs is stored. -->
+
+    <script>
+        try {
+            if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        } catch (e) { /* storage blocked: light */ }
+    </script>
+
+    <link rel="stylesheet" href="../assets/portal.css">
+
+    <style>
+        /* one narrow column: a form, not a page to read */
+        .card.login {
+            max-width: 36rem;
+        }
+
+        .intro {
+            margin-bottom: 2rem;
+        }
+
+        h2 {
+            margin: 0 0 1rem;
+            font-size: 1.25rem;
+        }
+
+        .step {
+            padding: 1.5rem 1.75rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-soft);
+            border-radius: 10px;
+        }
+
+        .step p {
+            line-height: 1.7;
+        }
+
+        .step > p {
+            margin-bottom: 1.25rem;
+        }
+
+        .step .field input[type="text"].code-letters {
+            width: 6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+        }
+
+        .code-preview {
+            margin: 0.5rem 0 1rem;
+            font-size: 1.05rem;
+        }
+
+        .code-preview strong,
+        .confirm-code strong {
+            font-family: Consolas, 'Courier New', monospace;
+            font-size: 1.2rem;
+            letter-spacing: 0.15em;
+        }
+
+        .confirm-list {
+            margin: 0 0 1rem 1.25rem;
+            line-height: 1.8;
+        }
+
+        .confirm-code {
+            margin-bottom: 1.5rem;
+        }
+
+        .consent {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            background: var(--surface-option);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .consent input {
+            flex: none;
+            width: 1.15rem;
+            height: 1.15rem;
+            margin-top: 0.2rem;
+            accent-color: var(--uni-blau-1);
+        }
+
+        [data-theme="dark"] .consent input {
+            accent-color: var(--uni-blau-4);
+        }
+
+        /* "Zurück" and the main button side by side, the main one on the right */
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        .actions .btn {
+            flex: 1 1 12rem;
+        }
+
+        .guest {
+            margin-top: 2.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-soft);
+            color: var(--text-muted);
+            line-height: 1.7;
+            text-align: left;
+        }
+
+        .guest .btn {
+            margin-top: 0.75rem;
+        }
+
+        @media (max-width: 600px) {
+            .step {
+                padding: 1.25rem 1rem;
+            }
+
+            .actions .btn,
+            .guest .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="header-title">Interaktive Lernmodule</div>
+            <div class="header-subtitle">Praktikum zu Experimentalphysik I</div>
+            <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Farbschema wechseln">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="5"/>
+                    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="header-lines">
+        <div class="line line-1"></div>
+        <div class="line line-i"></div>
+        <div class="line line-2"></div>
+    </div>
+
+    <main>
+        <div class="card login">
+            <h1>Anmelden</h1>
+            <p class="intro">
+                Mit der Anmeldung wird Ihr Fortschritt gespeichert, für alle Lernmodule gemeinsam.
+                Sie können dann auch an einem anderen Gerät weitermachen.
+            </p>
+
+            <!-- already logged in, without a module to go to -->
+            <section class="step" id="step-done" hidden>
+                <p>Sie sind angemeldet als <strong id="done-name"></strong>.</p>
+                <div class="actions">
+                    <button class="btn btn-quiet" type="button" id="logout">Abmelden</button>
+                    <a class="btn" id="done-continue" href="../">Zur Übersicht</a>
+                </div>
+            </section>
+
+            <!-- 1: course key and username -->
+            <form class="step" id="step-account" novalidate hidden>
+                <h2>Kurs und Benutzername</h2>
+                <div class="field">
+                    <label for="key">Kursschlüssel</label>
+                    <div class="hint">Sie finden ihn im ILIAS-Kurs des Praktikums.</div>
+                    <input type="password" id="key" autocomplete="off" required>
+                </div>
+                <div class="field">
+                    <label for="username">Benutzername</label>
+                    <div class="hint">
+                        Frei gewählt, zum Beispiel ein Spitzname. Bitte nicht Ihr Name oder Ihre Matrikelnummer.
+                    </div>
+                    <input type="text" id="username" placeholder="z. B. resonanz42" maxlength="100"
+                           autocomplete="username" autocapitalize="none" spellcheck="false" required>
+                </div>
+                <div class="message" id="account-message" role="alert"></div>
+                <div class="actions">
+                    <button class="btn" type="submit" id="account-submit">Weiter</button>
+                </div>
+            </form>
+
+            <!-- 2: the personal code, fields from codename.js -->
+            <form class="step" id="step-code" novalidate hidden>
+                <h2 id="code-heading">Ihr persönlicher Code</h2>
+                <p id="code-intro"></p>
+                <div id="code-fields"></div>
+                <p class="code-preview">Ihr Code: <strong id="code-preview">–</strong></p>
+                <div class="message" id="code-message" role="alert"></div>
+                <div class="actions">
+                    <button class="btn btn-quiet" type="button" id="code-back">Zurück</button>
+                    <button class="btn" type="submit" id="code-submit" disabled>Weiter</button>
+                </div>
+            </form>
+
+            <!-- 3, new accounts only: read-back and consent -->
+            <form class="step" id="step-confirm" novalidate hidden>
+                <h2>Angaben prüfen</h2>
+                <p>Bitte prüfen Sie, ob das stimmt:</p>
+                <ul class="confirm-list" id="confirm-list"></ul>
+                <p class="confirm-code">Daraus ergibt sich Ihr Code: <strong id="confirm-code"></strong></p>
+                <!-- PLACEHOLDER: wording to be agreed with the data protection officer before the first course use -->
+                <label class="consent">
+                    <input type="checkbox" id="consent">
+                    <span>
+                        Ich bin einverstanden, dass meine Antworten, Testergebnisse und Seitenaufrufe in den
+                        Lernmodulen unter meinem Benutzernamen und Code, ohne meinen Namen, gespeichert und von der
+                        Arbeitsgruppe Physik und ihre Didaktik für die Forschung ausgewertet werden. Die Einwilligung
+                        ist freiwillig; ohne sie können Sie die Lernmodule als Gast nutzen.
+                    </span>
+                </label>
+                <div class="message" id="confirm-message" role="alert"></div>
+                <div class="actions">
+                    <button class="btn btn-quiet" type="button" id="confirm-back">Zurück</button>
+                    <button class="btn" type="submit" id="confirm-submit" disabled>Konto anlegen</button>
+                </div>
+            </form>
+
+            <div class="guest" id="guest">
+                Ohne Kursschlüssel oder Einwilligung können Sie die Lernmodule als Gast nutzen.
+                Ihr Fortschritt wird dann nicht gespeichert.
+                <div><a class="btn btn-quiet" id="guest-link" href="../">Als Gast fortfahren</a></div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-department">
+                <a href="https://www.uni-goettingen.de/de/110922.html" target="_blank" rel="noopener noreferrer" class="footer-link">Physik und ihre Didaktik</a>
+            </div>
+            <div class="footer-info">© 2026</div>
+        </div>
+    </footer>
+
+    <script src="codename.js"></script>
+    <script>
+        // ── Where to go afterwards ──────────────────────────────────────────────────────────────────────────
+        // ?next=<module> after the login (and for guests); only these names, so the page can't be used to
+        // redirect anywhere else. Locally the modules run on their own ng serve ports.
+        const MODULES = {
+            pohl:       { title: 'Pohlscher Resonator', devPort: 4200 },
+            precession: { title: 'Kreiselpräzession',  devPort: 4201 },
+        };
+        const API = '../api';
+        const next = new URLSearchParams(location.search).get('next');
+        const module = Object.prototype.hasOwnProperty.call(MODULES, next) ? MODULES[next] : null;
+        const targetUrl = !module ? '../'
+            : location.port === '8000' ? `http://localhost:${module.devPort}/`
+            : `../${next}/`;
+
+        const $ = id => document.getElementById(id);
+        const steps = ['step-done', 'step-account', 'step-code', 'step-confirm'];
+
+        let mode = null;            // 'login' (known username) or 'register', after step 1
+        let codename = null;
+
+        function show(step) {
+            steps.forEach(id => { $(id).hidden = id !== step; });
+            $('guest').hidden = step === 'step-done';
+            const first = $(step).querySelector('input, select, a.btn');
+            if (first) first.focus();
+        }
+
+        function say(id, text) {
+            $(id).textContent = text || '';
+            $(id).classList.toggle('error', !!text);
+        }
+
+        async function post(path, body) {
+            return fetch(`${API}/${path}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+        }
+
+        const OFFLINE = 'Der Server ist gerade nicht erreichbar. Bitte versuchen Sie es später noch einmal '
+                      + 'oder fahren Sie als Gast fort.';
+
+        $('guest-link').href = targetUrl;
+        if (module) {
+            $('guest-link').textContent = `Als Gast zum Lernmodul „${module.title}“`;
+            $('done-continue').textContent = `Weiter zum Lernmodul „${module.title}“`;
+        }
+        $('done-continue').href = targetUrl;
+
+        // ── Step 1: course key and username ─────────────────────────────────────────────────────────────────
+        $('step-account').addEventListener('submit', async event => {
+            event.preventDefault();
+            const key = $('key').value.trim();
+            const username = $('username').value.trim();
+            $('key').classList.toggle('invalid', !key);
+            $('username').classList.toggle('invalid', !username);
+            if (!key || !username) return say('account-message', 'Bitte füllen Sie beide Felder aus.');
+
+            say('account-message', '');
+            $('account-submit').disabled = true;
+            try {
+                const response = await post('auth/check', { key, username });
+                if (response.status === 401) {
+                    $('key').classList.add('invalid');
+                    return say('account-message', 'Dieser Kursschlüssel ist ungültig.');
+                }
+                if (response.status === 400) {
+                    $('username').classList.add('invalid');
+                    return say('account-message',
+                        'Der Benutzername darf nur Buchstaben, Ziffern und . _ - @ enthalten.');
+                }
+                if (!response.ok) throw new Error(`check: ${response.status}`);
+
+                mode = (await response.json()).exists ? 'login' : 'register';
+                $('code-heading').textContent = mode === 'login' ? 'Willkommen zurück' : 'Ihr persönlicher Code';
+                $('code-intro').textContent = mode === 'login'
+                    ? `Bitte bestätigen Sie mit Ihrem persönlichen Code, dass „${username}“ Ihr Konto ist: `
+                      + 'mit denselben Angaben wie bei der ersten Anmeldung.'
+                    : 'Der Code verbindet Ihre Arbeit in den Lernmodulen mit den Fragebögen des Praktikums, '
+                      + 'ohne Ihren Namen. Er entsteht wie auf den Fragebögen aus Angaben, die nur Sie kennen; '
+                      + 'gespeichert wird nur der Code selbst. Sie brauchen ihn wieder, wenn Sie sich an einem '
+                      + 'anderen Gerät anmelden.';
+                $('code-submit').textContent = mode === 'login' ? 'Anmelden' : 'Weiter';
+                say('code-message', '');
+                show('step-code');
+            } catch (err) {
+                console.error(err);
+                say('account-message', OFFLINE);
+            } finally {
+                $('account-submit').disabled = false;
+            }
+        });
+
+        // ── Step 2: the personal code ───────────────────────────────────────────────────────────────────────
+        function buildCodeFields() {
+            const container = $('code-fields');
+            for (const part of CODENAME.parts) {
+                const field = document.createElement('div');
+                field.className = 'field';
+                const label = document.createElement('label');
+                label.htmlFor = `code-${part.id}`;
+                label.textContent = part.label;
+                const hint = document.createElement('div');
+                hint.className = 'hint';
+                hint.textContent = part.hint;
+
+                let input;
+                if (part.input === 'month') {
+                    input = document.createElement('select');
+                    input.add(new Option('Bitte wählen', ''));
+                    CODENAME.MONTHS.forEach((name, i) => input.add(new Option(name, String(i + 1))));
+                } else {
+                    input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'code-letters';
+                    input.maxLength = part.length;
+                    input.autocomplete = 'off';
+                    input.setAttribute('autocapitalize', 'characters');
+                    input.spellcheck = false;
+                }
+                input.id = `code-${part.id}`;
+                input.addEventListener('input', updateCode);
+                field.append(label, hint, input);
+                container.append(field);
+            }
+        }
+
+        function codeValues() {
+            const values = {};
+            for (const part of CODENAME.parts) {
+                const raw = $(`code-${part.id}`).value;
+                values[part.id] = part.input === 'month' ? (raw ? Number(raw) : null) : raw.trim();
+            }
+            return values;
+        }
+
+        function updateCode() {
+            codename = CODENAME.build(codeValues());
+            $('code-preview').textContent = codename || '–';
+            $('code-submit').disabled = !codename;
+        }
+
+        $('code-back').addEventListener('click', () => show('step-account'));
+
+        $('step-code').addEventListener('submit', async event => {
+            event.preventDefault();
+            if (!codename) return;
+            if (mode === 'register') {
+                const values = codeValues();
+                const list = $('confirm-list');
+                list.replaceChildren(...CODENAME.parts.map(part => {
+                    const item = document.createElement('li');
+                    item.textContent = part.confirm(values[part.id]);
+                    return item;
+                }));
+                $('confirm-code').textContent = codename;
+                say('confirm-message', '');
+                return show('step-confirm');
+            }
+
+            say('code-message', '');
+            $('code-submit').disabled = true;
+            try {
+                const response = await post('auth/login', {
+                    key: $('key').value.trim(), username: $('username').value.trim(), codename,
+                });
+                if (response.status === 401) {
+                    return say('code-message', 'Benutzername und Code passen nicht zusammen. Bitte prüfen Sie '
+                        + 'Ihre Angaben; der Code entsteht genauso wie bei Ihrer ersten Anmeldung.');
+                }
+                if (response.status === 423) {
+                    return say('code-message', 'Nach zu vielen Fehlversuchen ist dieses Konto gesperrt. Bitte '
+                        + 'wenden Sie sich an die Betreuung des Praktikums.');
+                }
+                if (!response.ok) throw new Error(`login: ${response.status}`);
+                location.replace(targetUrl);
+            } catch (err) {
+                console.error(err);
+                say('code-message', OFFLINE);
+            } finally {
+                $('code-submit').disabled = !codename;
+            }
+        });
+
+        // ── Step 3: read-back and consent, then the new account ─────────────────────────────────────────────
+        $('consent').addEventListener('change', () => { $('confirm-submit').disabled = !$('consent').checked; });
+        $('confirm-back').addEventListener('click', () => show('step-code'));
+
+        $('step-confirm').addEventListener('submit', async event => {
+            event.preventDefault();
+            if (!$('consent').checked || !codename) return;
+            say('confirm-message', '');
+            $('confirm-submit').disabled = true;
+            try {
+                const response = await post('auth/register', {
+                    key: $('key').value.trim(), username: $('username').value.trim(), codename, consent: true,
+                });
+                if (response.status === 409) {
+                    show('step-account');
+                    $('username').classList.add('invalid');
+                    return say('account-message',
+                        'Dieser Benutzername wurde gerade vergeben. Bitte wählen Sie einen anderen.');
+                }
+                if (!response.ok) throw new Error(`register: ${response.status}`);
+                location.replace(targetUrl);
+            } catch (err) {
+                console.error(err);
+                say('confirm-message', OFFLINE);
+            } finally {
+                $('confirm-submit').disabled = !$('consent').checked;
+            }
+        });
+
+        // ── Logout and start ────────────────────────────────────────────────────────────────────────────────
+        $('logout').addEventListener('click', async () => {
+            try { await post('auth/logout', {}); } catch (err) { console.error(err); }
+            show('step-account');
+        });
+
+        ['key', 'username'].forEach(id => $(id).addEventListener('input', () => $(id).classList.remove('invalid')));
+
+        buildCodeFields();
+
+        // Already logged in: on to the module, or offer it and Abmelden.
+        fetch(`${API}/auth/me`, { cache: 'no-store' })
+            .then(response => (response.ok ? response.json() : null))
+            .then(user => {
+                if (user && module) return location.replace(targetUrl);
+                if (user) {
+                    $('done-name').textContent = user.username;
+                    return show('step-done');
+                }
+                show('step-account');
+            })
+            .catch(() => show('step-account'));
+
+        document.getElementById('theme-toggle').addEventListener('click', function () {
+            const dark = document.documentElement.getAttribute('data-theme') !== 'dark';
+            if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+            else document.documentElement.removeAttribute('data-theme');
+            try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) { /* not remembered */ }
+        });
+    </script>
+</body>
+</html>
