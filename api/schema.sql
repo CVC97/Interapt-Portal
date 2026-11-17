@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS users (
   username      VARCHAR(100) NOT NULL,
   codename      VARCHAR(32) NOT NULL,
   consent_at    DATETIME(3) NOT NULL,
-  failed_logins INT NOT NULL DEFAULT 0,
   created_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   last_active   DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   UNIQUE KEY unique_user_per_cohort (cohort, username),

@@ -10,9 +10,8 @@ set_exception_handler(function (Throwable $e) {
     respond(500, ['error' => 'Server error']);
 });
 
-const AUTH_COOKIE      = 'interapt_auth';
-const AUTH_MAX_AGE     = 200 * 24 * 3600;   // a semester and a bit: one login lasts the course
-const MAX_FAILED_LOGIN = 10;                // the codename has little entropy: stop guessing early
+const AUTH_COOKIE  = 'interapt_auth';
+const AUTH_MAX_AGE = 200 * 24 * 3600;   // a semester and a bit: one login lasts the course
 
 function config(): array {
     static $cfg = null;
@@ -135,7 +134,7 @@ function requireUser(): array {
 }
 
 function findUser(string $cohort, string $username): ?array {
-    $stmt = getDb()->prepare('SELECT id, username, codename, failed_logins FROM users WHERE cohort = ? AND username = ?');
+    $stmt = getDb()->prepare('SELECT id, username, codename FROM users WHERE cohort = ? AND username = ?');
     $stmt->execute([$cohort, $username]);
     $user = $stmt->fetch();
     return $user === false ? null : $user;

@@ -6,8 +6,8 @@
     <title>Anmelden – Interaktive Lernmodule</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='43' fill='none' stroke='rgb(80,165,210)' stroke-width='12'/%3E%3Cellipse cx='50' cy='50' rx='29' ry='11' fill='none' stroke='white' stroke-width='7' transform='rotate(45 50 50)'/%3E%3Cellipse cx='50' cy='50' rx='29' ry='11' fill='none' stroke='white' stroke-width='7' transform='rotate(-45 50 50)'/%3E%3Ccircle cx='50' cy='50' r='6' fill='rgb(80,165,210)' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
 
-    <!-- One login for all learning modules (/login/?next=pohl). ILIAS links here; the modules' old
-         ilias_bridge.html pages redirect here. Steps: course key and username → the personal code (codename.js) →
+    <!-- One login for all learning modules (/login/?next=pohl), reached from the landing page and from ILIAS.
+         Steps: course key and username → the personal code (codename.js) →
          for a new account the read-back and the consent. The server sets a login cookie for the whole site
          (api/auth/*). Guests go on without an account; nothing of theirs is stored. -->
 
@@ -124,6 +124,8 @@
         }
 
         .guest .btn {
+            display: block;
+            width: 100%;
             margin-top: 0.75rem;
         }
 
@@ -132,8 +134,7 @@
                 padding: 1.25rem 1rem;
             }
 
-            .actions .btn,
-            .guest .btn {
+            .actions .btn {
                 width: 100%;
             }
         }
@@ -186,17 +187,17 @@
             <form class="step" id="step-account" novalidate hidden>
                 <h2>Kurs und Benutzername</h2>
                 <div class="field">
-                    <label for="key">Kursschlüssel</label>
-                    <div class="hint">Sie finden ihn im ILIAS-Kurs des Praktikums.</div>
-                    <input type="password" id="key" autocomplete="off" required>
-                </div>
-                <div class="field">
                     <label for="username">Benutzername</label>
                     <div class="hint">
                         Frei gewählt, zum Beispiel ein Spitzname. Bitte nicht Ihr Name oder Ihre Matrikelnummer.
                     </div>
                     <input type="text" id="username" placeholder="z. B. resonanz42" maxlength="100"
                            autocomplete="username" autocapitalize="none" spellcheck="false" required>
+                </div>
+                <div class="field">
+                    <label for="key">Kursschlüssel</label>
+                    <div class="hint">Sie finden ihn im ILIAS-Kurs des Praktikums.</div>
+                    <input type="password" id="key" autocomplete="off" required>
                 </div>
                 <div class="message" id="account-message" role="alert"></div>
                 <div class="actions">
@@ -429,10 +430,6 @@
                 if (response.status === 401) {
                     return say('code-message', 'Benutzername und Code passen nicht zusammen. Bitte prüfen Sie '
                         + 'Ihre Angaben; der Code entsteht genauso wie bei Ihrer ersten Anmeldung.');
-                }
-                if (response.status === 423) {
-                    return say('code-message', 'Nach zu vielen Fehlversuchen ist dieses Konto gesperrt. Bitte '
-                        + 'wenden Sie sich an die Betreuung des Praktikums.');
                 }
                 if (!response.ok) throw new Error(`login: ${response.status}`);
                 location.replace(targetUrl);

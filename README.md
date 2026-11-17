@@ -37,7 +37,7 @@ All JSON. The login cookie (`interapt_auth`, HttpOnly, `Path=/`) is set by `regi
 |---|---|---|---|
 | POST | `/api/auth/check` | `{key, username}` | `{exists}`; 401 wrong key, 400 invalid username |
 | POST | `/api/auth/register` | `{key, username, codename, consent: true}` | 201 `{username, cohort}` + cookie; 409 username taken |
-| POST | `/api/auth/login` | `{key, username, codename}` | 200 `{username, cohort}` + cookie; 401 no match, 423 locked |
+| POST | `/api/auth/login` | `{key, username, codename}` | 200 `{username, cohort}` + cookie; 401 no match |
 | POST | `/api/auth/logout` | – | clears the cookie |
 | GET | `/api/auth/me` | – | `{username, cohort}`; 401 = not logged in (guest) |
 | GET | `/api/progress?module=pohl` | – | `{pageVisits, attempts}` of that module, the latest attempt per question |
@@ -73,7 +73,7 @@ The modules' deploys now remove their old `pohl/api/` and `precession/api/` from
    DROP TABLE IF EXISTS question_attempts, page_visits, users, modules;
    ```
 3. Deploy the portal (push or run the workflow), then check `https://interapt.uni-goettingen.de/api/auth/me` answers `{"error":"not logged in"}`.
-4. Deploy the modules. Point the ILIAS links to `https://interapt.uni-goettingen.de/login/?next=pohl` (and `next=precession`); the old `…/pohl/ilias_bridge.html` links redirect there too.
+4. Deploy the modules. Links from ILIAS go to `https://interapt.uni-goettingen.de/` or straight to `https://interapt.uni-goettingen.de/login/?next=pohl` (and `next=precession`).
 
 
 ## Maintenance
@@ -81,11 +81,6 @@ The modules' deploys now remove their old `pohl/api/` and `precession/api/` from
 **A new semester:** add its key to `cohort_keys` in the server's `api/config.php`, e.g. `'ss27' => '…'`. Accounts belong to the semester whose key created them; the same username can be taken again in the next semester (repeating students start fresh). Remove an old key once its students no longer need to log in on a new device; existing logins (cookies) keep working until they expire (200 days).
 
 **A new module:** add its name to `modules` in `api/config.php` (locally and on the server), to `MODULES` in `login/index.html` (title, local port), and a card on `index.html`; the module sets the same name as `MODULE_NAME`.
-
-**A locked account** (10 wrong codes):
-```sql
-UPDATE users SET failed_logins = 0 WHERE cohort = 'ws2627' AND username = 'resonanz42';
-```
 
 **Delete a student and all their data** (visits and attempts cascade):
 ```sql
