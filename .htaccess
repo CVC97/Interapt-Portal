@@ -1,0 +1,12 @@
+# Server root (interapt.uni-goettingen.de/). The modules below (/pohl/, /precession/) have .htaccess files of
+# their own, which replace these rules there. Local development uses api/router.php instead; keep both in step.
+RewriteEngine On
+RewriteBase /
+
+RewriteRule ^api/auth/(check|register|login|logout|me)$  api/auth/$1.php        [L]
+RewriteRule ^api/progress$                               api/progress/load.php  [L,QSA]
+RewriteRule ^api/progress/save$                          api/progress/save.php  [L]
+
+# config.php and the PHP files are reached only through the routes above.
+RewriteCond %{ENV:REDIRECT_STATUS} ^$
+RewriteRule ^api/ - [F]
