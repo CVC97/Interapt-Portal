@@ -22,7 +22,7 @@
     <style>
         /* one narrow column: a form, not a page to read */
         .card.login {
-            max-width: 36rem;
+            max-width: 44rem;
         }
 
         .intro {
@@ -53,6 +53,12 @@
             width: 6rem;
             text-transform: uppercase;
             letter-spacing: 0.2em;
+        }
+
+        /* the code's parts numbered by the page, not in codename.js's labels (those are the surveys' wording) */
+        .part-number {
+            margin-right: 0.35rem;
+            color: var(--uni-blau-4);
         }
 
         .code-preview {
@@ -101,17 +107,21 @@
             accent-color: var(--uni-blau-4);
         }
 
-        /* "Zurück" and the main button side by side, the main one on the right */
+        /* As the modules' .button-container: "Zurück" on the left, the way on to the right, each half the row
+           with 1.5rem between them; a lone button keeps its half on the right. Both in the same light style. */
         .actions {
             display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            justify-content: flex-end;
+            gap: 1.5rem;
+            justify-content: space-between;
             margin-top: 1.5rem;
         }
 
         .actions .btn {
-            flex: 1 1 12rem;
+            flex: 0 1 calc(50% - 0.75rem);
+        }
+
+        .actions .btn:last-child {
+            margin-left: auto;
         }
 
         .guest {
@@ -134,8 +144,16 @@
                 padding: 1.25rem 1rem;
             }
 
-            .actions .btn {
-                width: 100%;
+            /* phones: full width, stacked, the main button on top */
+            .actions {
+                flex-direction: column-reverse;
+                gap: 0.75rem;
+            }
+
+            .actions .btn,
+            .actions .btn:last-child {
+                flex: none;
+                margin-left: 0;
             }
         }
     </style>
@@ -178,8 +196,8 @@
             <section class="step" id="step-done" hidden>
                 <p>Sie sind angemeldet als <strong id="done-name"></strong>.</p>
                 <div class="actions">
-                    <button class="btn btn-quiet" type="button" id="logout">Abmelden</button>
-                    <a class="btn" id="done-continue" href="../">Zur Übersicht</a>
+                    <button class="btn btn-step" type="button" id="logout">Abmelden</button>
+                    <a class="btn btn-step" id="done-continue" href="../">Zur Übersicht</a>
                 </div>
             </section>
 
@@ -189,7 +207,7 @@
                 <div class="field">
                     <label for="username">Benutzername</label>
                     <div class="hint">
-                        Diesen können sie frei wählen, allerdings ist jeder Benutzername lediglich einmal verfügbar und wird später mit ihrem persönlichen Code verknüpft. Sie sollten sich ihn merken.
+                        Diesen können Sie frei wählen, allerdings ist jeder Benutzername lediglich einmal verfügbar und wird später mit Ihrem persönlichen Code verknüpft. Sie sollten ihn sich merken.
                     </div>
                     <input type="text" id="username" placeholder="z. B. FrankTenpenny" maxlength="100"
                            autocomplete="username" autocapitalize="none" spellcheck="false" required>
@@ -201,7 +219,7 @@
                 </div>
                 <div class="message" id="account-message" role="alert"></div>
                 <div class="actions">
-                    <button class="btn" type="submit" id="account-submit">Weiter</button>
+                    <button class="btn btn-step" type="submit" id="account-submit">Weiter</button>
                 </div>
             </form>
 
@@ -213,8 +231,8 @@
                 <p class="code-preview">Ihr Code: <strong id="code-preview">–</strong></p>
                 <div class="message" id="code-message" role="alert"></div>
                 <div class="actions">
-                    <button class="btn btn-quiet" type="button" id="code-back">Zurück</button>
-                    <button class="btn" type="submit" id="code-submit" disabled>Weiter</button>
+                    <button class="btn btn-step" type="button" id="code-back">Zurück</button>
+                    <button class="btn btn-step" type="submit" id="code-submit" disabled>Weiter</button>
                 </div>
             </form>
 
@@ -236,8 +254,8 @@
                 </label>
                 <div class="message" id="confirm-message" role="alert"></div>
                 <div class="actions">
-                    <button class="btn btn-quiet" type="button" id="confirm-back">Zurück</button>
-                    <button class="btn" type="submit" id="confirm-submit" disabled>Konto anlegen</button>
+                    <button class="btn btn-step" type="button" id="confirm-back">Zurück</button>
+                    <button class="btn btn-step" type="submit" id="confirm-submit" disabled>Konto anlegen</button>
                 </div>
             </form>
 
@@ -372,12 +390,15 @@
         // ── Step 2: the personal code ───────────────────────────────────────────────────────────────────────
         function buildCodeFields() {
             const container = $('code-fields');
-            for (const part of CODENAME.parts) {
+            CODENAME.parts.forEach((part, i) => {
                 const field = document.createElement('div');
                 field.className = 'field';
                 const label = document.createElement('label');
                 label.htmlFor = `code-${part.id}`;
-                label.textContent = part.label;
+                const number = document.createElement('span');
+                number.className = 'part-number';
+                number.textContent = `${i + 1}.`;
+                label.append(number, part.label);
                 const hint = document.createElement('div');
                 hint.className = 'hint';
                 hint.textContent = part.hint;
@@ -400,7 +421,7 @@
                 input.addEventListener('input', updateCode);
                 field.append(label, hint, input);
                 container.append(field);
-            }
+            });
         }
 
         function codeValues() {

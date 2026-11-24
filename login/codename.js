@@ -9,7 +9,7 @@
 // not unique (Juni and Juli → JU, März and Mai → MA).
 //
 // Each part:
-//   label    the question, as on the questionnaire
+//   label    the question, as on the questionnaire, without a number (the login page numbers the parts)
 //   hint     how to answer (one line)
 //   input    'month' (a dropdown) or 'letters' (a short text field with `length` letters)
 //   code     value → this part's piece of the code, or null if the value is incomplete

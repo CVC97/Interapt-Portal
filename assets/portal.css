@@ -27,6 +27,7 @@
     --button-border-color: var(--uni-blau-1);
     --button-text-color: var(--uni-blau-1);
     --card-accent: var(--uni-blau-3);
+    --quiet-fill-hover: #eceef1;                  /* the guest button's hover: grey, a clear step from --bg-main */
 }
 
 [data-theme="dark"] {
@@ -46,6 +47,7 @@
     --button-color-hover: var(--card-bg);
     --button-border-color: white;
     --button-text-color: white;
+    --quiet-fill-hover: var(--surface-option);
 }
 
 * {
@@ -274,6 +276,7 @@ footer {
     font-weight: 600;
     line-height: 1.5;
     text-align: center;
+    hyphens: manual;   /* a label breaks between words, never inside a name */
     color: var(--button-text-color);
     background: var(--button-color);
     border: 2px solid var(--button-border-color);
@@ -307,17 +310,40 @@ a.btn:hover {
     cursor: not-allowed;
 }
 
-/* the quiet alternative next to the main button */
+/* the login page's step buttons (Zurück, Weiter, …), as the landing page's module cards but in their blue
+   (--card-accent) for text and edge, in both themes: the edge half strength, full on hover with the cards' tint;
+   the button's own 2px edge, no blue line on top */
+.btn-step,
+a.btn-step {
+    color: var(--card-accent);
+    background: var(--card-bg);
+    border-color: color-mix(in srgb, var(--card-accent) 50%, transparent);
+    box-shadow: none;
+}
+
+.btn-step:not(:disabled):hover {
+    color: var(--card-accent);
+    background: var(--surface-option-hover);
+    border-color: var(--card-accent);
+}
+
+/* the quiet way aside (the guest way): grey in both themes, so it ranks below the steps */
 .btn-quiet {
-    color: var(--text-secondary);
+    color: var(--text-muted);
     background: transparent;
     border-color: var(--border-soft);
     box-shadow: none;
 }
 
-.btn-quiet:hover {
-    color: var(--text-primary);
-    background: var(--surface-option);
+/* a link as a button: the same edge all round (not a.btn's dark bottom), grey also in dark mode (not a link's blue) */
+a.btn-quiet {
+    color: var(--text-muted);
+    border-bottom-color: var(--border-soft);
+}
+
+.btn-quiet:not(:disabled):hover {
+    color: var(--text-muted);
+    background: var(--quiet-fill-hover);
 }
 
 /* ── Form fields ──────────────────────────────────────────────────────── */
