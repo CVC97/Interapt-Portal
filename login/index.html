@@ -300,8 +300,24 @@
             });
         }
 
-        const OFFLINE = 'Der Server ist gerade nicht erreichbar. Bitte versuchen Sie es später noch einmal '
-                      + 'oder fahren Sie als Gast fort.';
+        // A response the page can't handle (5xx, 404, …) is a server error, not a lost connection: the two get
+        // different messages, the first with the status code, so a report from a student tells where to look.
+        class ServerError extends Error {
+            constructor(step, status) {
+                super(`${step}: ${status}`);
+                this.status = status;
+            }
+        }
+
+        function failure(err) {
+            console.error(err);
+            if (err instanceof ServerError) {
+                return `Beim Server ist ein Fehler aufgetreten (Fehler ${err.status}). Bitte versuchen Sie es `
+                     + 'später noch einmal oder fahren Sie als Gast fort.';
+            }
+            return 'Der Server ist gerade nicht erreichbar. Bitte prüfen Sie Ihre Internetverbindung, versuchen '
+                 + 'Sie es später noch einmal oder fahren Sie als Gast fort.';
+        }
 
         $('guest-link').href = targetUrl;
         if (module) {
@@ -332,7 +348,7 @@
                     return say('account-message',
                         'Der Benutzername darf nur Buchstaben, Ziffern und . _ - @ enthalten.');
                 }
-                if (!response.ok) throw new Error(`check: ${response.status}`);
+                if (!response.ok) throw new ServerError('check', response.status);
 
                 mode = (await response.json()).exists ? 'login' : 'register';
                 $('code-heading').textContent = mode === 'login' ? 'Willkommen zurück' : 'Ihr persönlicher Code';
@@ -347,8 +363,7 @@
                 say('code-message', '');
                 show('step-code');
             } catch (err) {
-                console.error(err);
-                say('account-message', OFFLINE);
+                say('account-message', failure(err));
             } finally {
                 $('account-submit').disabled = false;
             }
@@ -431,11 +446,10 @@
                     return say('code-message', 'Benutzername und Code passen nicht zusammen. Bitte prüfen Sie '
                         + 'Ihre Angaben; der Code entsteht genauso wie bei Ihrer ersten Anmeldung.');
                 }
-                if (!response.ok) throw new Error(`login: ${response.status}`);
+                if (!response.ok) throw new ServerError('login', response.status);
                 location.replace(targetUrl);
             } catch (err) {
-                console.error(err);
-                say('code-message', OFFLINE);
+                say('code-message', failure(err));
             } finally {
                 $('code-submit').disabled = !codename;
             }
@@ -460,11 +474,10 @@
                     return say('account-message',
                         'Dieser Benutzername wurde gerade vergeben. Bitte wählen Sie einen anderen.');
                 }
-                if (!response.ok) throw new Error(`register: ${response.status}`);
+                if (!response.ok) throw new ServerError('register', response.status);
                 location.replace(targetUrl);
             } catch (err) {
-                console.error(err);
-                say('confirm-message', OFFLINE);
+                say('confirm-message', failure(err));
             } finally {
                 $('confirm-submit').disabled = !$('consent').checked;
             }
