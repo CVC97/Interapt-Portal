@@ -38,7 +38,7 @@ Built and tested locally (API with curl, the whole flow in headless Chrome with 
 
 ## 4 Data
 
-Schema in `api/schema.sql`. `users` is global (cohort, username, codename, consent_at); `page_visits` and `question_attempts` carry `module_id` in their unique keys. A module saves only when listed under `modules` in `config.php`; its `modules` row is created on its first save. `last_active` is set explicitly on save and login, not `ON UPDATE` (a failed login is no activity).
+Schema in `api/schema.sql`. `users` is global (cohort, username, codename, consent_at); `page_visits`, `question_attempts` and `effort_ratings` carry `module_id` in their unique keys. `effort_ratings` (2026-11-24) holds the modules' mental-effort pop-up: one row per unit and student (the first answer counts), rating 1–9 or NULL for „Keine Angabe“, `shown_at`/`answered_at` for the response time, `context` JSON with the way the unit was taken. `progress/save` takes them as `ratings`, `progress` returns the rated units as `ratedUnits`. It is a table of its own because a rating has no `is_correct`; mixed into `question_attempts` it would distort the analysis. A module saves only when listed under `modules` in `config.php`; its `modules` row is created on its first save. `last_active` is set explicitly on save and login, not `ON UPDATE` (a failed login is no activity).
 
 
 ## 5 Pitfalls
@@ -53,4 +53,5 @@ Schema in `api/schema.sql`. `users` is global (cohort, username, codename, conse
 - **Codename scheme (before the first course use):** `login/codename.js` holds Carlo's example. Replace it with the surveys' scheme and wording, part by part. In the example, the first two letters of month names don't tell Juni/Juli and März/Mai apart.
 - **Consent text:** placeholder in `login/index.html`; to be agreed with the data protection officer, with a link to a privacy notice, and a retention rule.
 - **Guessing:** no rate limit on `auth/check` (course key) or on `auth/login` (code). The lock after 10 wrong codes was removed (2026-11-17), so with the key and a username, a code with ~10⁴ combinations can be tried through.
+- **`effort_ratings` on the server:** create the table (`schema.sql`; `CREATE TABLE IF NOT EXISTS`, so running it again only adds it) and deploy `save.php` before the modules that send ratings: an older `save.php` ignores them and answers 200, so the modules would forget them as sent. Not tested against MySQL yet.
 - **First deploy:** order and steps in the README (*First-time server setup*): the portal and its `config.php` before the modules' next deploy, which removes their old `api/`.

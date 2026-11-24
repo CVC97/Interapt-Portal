@@ -70,3 +70,22 @@ CREATE TABLE IF NOT EXISTS question_attempts (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (module_id) REFERENCES modules(id)
 );
+
+-- One row per mental-effort rating (Paas's single-item 9-point scale), asked in a pop-up after a learning unit's
+-- last sub-page. rating is 1..9, NULL when the student chose "Keine Angabe". shown_at/answered_at give the
+-- response time for quality checks; context holds the way the unit was taken (e.g. {"flow":"learning-first"}).
+-- One rating per unit and student: the unique key keeps the first answer.
+CREATE TABLE IF NOT EXISTS effort_ratings (
+  id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id     INT NOT NULL,
+  module_id   INT NOT NULL,
+  unit_id     VARCHAR(100) NOT NULL,
+  rating      TINYINT NULL,
+  shown_at    DATETIME(3) NOT NULL,
+  answered_at DATETIME(3) NOT NULL,
+  context     JSON,
+  received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_rating (user_id, module_id, unit_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (module_id) REFERENCES modules(id)
+);

@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../lib.php';
 
-// POST {module, visits, attempts} for the logged-in user. The module's start page and its end-of-test page send
+// POST {module, visits, attempts, ratings} for the logged-in user. The module's start page and its end-of-test page send
 // it, and every page on pagehide / when the tab is hidden.
 requireMethod('POST');
 
@@ -36,6 +36,7 @@ function splitPage($page): ?array {
 
 $visits   = is_array($body['visits']   ?? null) ? $body['visits']   : [];
 $attempts = is_array($body['attempts'] ?? null) ? $body['attempts'] : [];
+$ratings  = is_array($body['ratings']  ?? null) ? $body['ratings']  : [];
 $skipped  = 0;
 
 $pdo = getDb();
@@ -93,6 +94,32 @@ try {
             json_encode($a['correctAnswer'] ?? null),
             json_encode($a['texts'] ?? null),
             $answeredAt,
+        ]);
+    }
+
+    // Mental-effort ratings: 1..9, or null for "Keine Angabe".
+    $s = $pdo->prepare(
+        'INSERT INTO effort_ratings (user_id, module_id, unit_id, rating, shown_at, answered_at, context)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE id = id'
+    );
+    foreach ($ratings as $r) {
+        $rating     = $r['rating'] ?? null;
+        $shownAt    = toDatetime($r['shownAt'] ?? null);
+        $answeredAt = toDatetime($r['answeredAt'] ?? null);
+        $context    = $r['context'] ?? null;
+        if (
+            $shownAt === null || $answeredAt === null
+            || !isId($r['unitId'] ?? null, 100)
+            || ($rating !== null && (!is_int($rating) || $rating < 1 || $rating > 9))
+            || ($context !== null && !is_array($context))
+        ) {
+            $skipped++;
+            continue;
+        }
+        $s->execute([
+            $userId, $moduleId, $r['unitId'], $rating, $shownAt, $answeredAt,
+            $context === null ? null : json_encode($context),
         ]);
     }
 

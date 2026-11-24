@@ -48,4 +48,9 @@ foreach ($s->fetchAll() as $a) {
     ];
 }
 
-respond(200, ['pageVisits' => $pageVisits, 'attempts' => array_values($latest)]);
+// Units already rated, so the pop-up isn't shown again on another device.
+$s = $pdo->prepare('SELECT unit_id FROM effort_ratings WHERE user_id = ? AND module_id = ?');
+$s->execute([$userId, $moduleId]);
+$ratedUnits = array_column($s->fetchAll(), 'unit_id');
+
+respond(200, ['pageVisits' => $pageVisits, 'attempts' => array_values($latest), 'ratedUnits' => $ratedUnits]);
