@@ -26,6 +26,7 @@ Built and tested locally (API with curl, the whole flow in headless Chrome with 
 | **The module asks `api/auth/me` on startup, before its tracking services exist** | The modules' services read their stored state once, keyed by the student id. An app initializer settles the id first (`Session.resolve()`); a `localStorage` hand-over from the login page wouldn't work locally, where login (:8000) and module (:4200) are different origins. Server unreachable: the module keeps the id it had, so answers are queued and sent later. |
 | **Landing page cards go through the login page** unless logged in | Students should not end up as guests by accident; the login page offers the guest way right there. |
 | **Same look as the modules** | Tokens, header, footer and buttons as in the modules (`assets/portal.css`, shared by both pages). The login is one narrow column with one step at a time; the main button is greyed out, never hidden, until the step is complete. |
+| **Login step buttons are the modules' Weiter/Zurück** (Carlo, 2026-11-25) | White with a navy edge, a navy tint on hover, no shadow inside the step's box. They were light blue (`--uni-blau-3`) like the landing page's cards, but that text is 3.6:1 on white (4.1:1 dark), below 4.5:1, and the look differed from the modules the student goes on to. „Als Gast fortfahren“ stays the quiet grey way aside. |
 
 
 ## 3 The login flow

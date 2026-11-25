@@ -22,8 +22,8 @@
     --shadow-color: rgba(21, 50, 104, 0.12);
     --surface-option: #f4f7fb;
     --surface-option-hover: #e9f1fa;
-    --button-color: var(--bg-primary);
-    --button-color-hover: var(--card-bg);
+    --button-color: var(--card-bg);               /* white with a navy edge, as the modules' Weiter/Zurück */
+    --button-color-hover: #dee2ea;                /* 14 % navy in white: 1.3:1 against the rest state */
     --button-border-color: var(--uni-blau-1);
     --button-text-color: var(--uni-blau-1);
     --card-accent: var(--uni-blau-3);
@@ -43,8 +43,8 @@
     --shadow-color: rgba(0, 0, 0, 0.4);
     --surface-option: rgba(148, 163, 184, 0.10);
     --surface-option-hover: rgba(148, 163, 184, 0.18);
-    --button-color: var(--bg-primary);
-    --button-color-hover: var(--card-bg);
+    --button-color: var(--card-bg);
+    --button-color-hover: #394454;                /* 14 % off-white in --card-bg: 1.5:1 against the rest state */
     --button-border-color: white;
     --button-text-color: white;
     --quiet-fill-hover: var(--surface-option);
@@ -286,14 +286,23 @@ footer {
     transition: background 0.3s ease;
 }
 
+/* a link as a button: the button's colour and edge, not a link's blue (also in dark mode) */
 a.btn {
+    color: var(--button-text-color);
     border-bottom: 2px solid var(--button-border-color);
 }
 
-.btn:hover,
+/* hover: a navy tint, edge and text stay */
+.btn:not(:disabled):hover,
 a.btn:hover {
     color: var(--button-text-color);
     background: var(--button-color-hover);
+    border-color: var(--button-border-color);
+}
+
+.btn:not(:disabled):active {
+    transform: scale(0.98);
+    transition: none;
 }
 
 .btn:focus-visible {
@@ -308,23 +317,6 @@ a.btn:hover {
     border-color: rgb(135, 135, 134);
     opacity: 0.5;
     cursor: not-allowed;
-}
-
-/* the login page's step buttons (Zurück, Weiter, …), as the landing page's module cards but in their blue
-   (--card-accent) for text and edge, in both themes: the edge half strength, full on hover with the cards' tint;
-   the button's own 2px edge, no blue line on top */
-.btn-step,
-a.btn-step {
-    color: var(--card-accent);
-    background: var(--card-bg);
-    border-color: color-mix(in srgb, var(--card-accent) 50%, transparent);
-    box-shadow: none;
-}
-
-.btn-step:not(:disabled):hover {
-    color: var(--card-accent);
-    background: var(--surface-option-hover);
-    border-color: var(--card-accent);
 }
 
 /* the quiet way aside (the guest way): grey in both themes, so it ranks below the steps */
@@ -344,6 +336,7 @@ a.btn-quiet {
 .btn-quiet:not(:disabled):hover {
     color: var(--text-muted);
     background: var(--quiet-fill-hover);
+    border-color: var(--border-soft);
 }
 
 /* ── Form fields ──────────────────────────────────────────────────────── */

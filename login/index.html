@@ -108,7 +108,7 @@
         }
 
         /* As the modules' .button-container: "Zurück" on the left, the way on to the right, each half the row
-           with 1.5rem between them; a lone button keeps its half on the right. Both in the same light style. */
+           with 1.5rem between them; a lone button keeps its half on the right. Both the modules' .btn. */
         .actions {
             display: flex;
             gap: 1.5rem;
@@ -122,6 +122,11 @@
 
         .actions .btn:last-child {
             margin-left: auto;
+        }
+
+        /* in the step's box: no shadow, the box lifts them */
+        .step .btn {
+            box-shadow: none;
         }
 
         .guest {
@@ -196,8 +201,8 @@
             <section class="step" id="step-done" hidden>
                 <p>Sie sind angemeldet als <strong id="done-name"></strong>.</p>
                 <div class="actions">
-                    <button class="btn btn-step" type="button" id="logout">Abmelden</button>
-                    <a class="btn btn-step" id="done-continue" href="../">Zur Übersicht</a>
+                    <button class="btn" type="button" id="logout">Abmelden</button>
+                    <a class="btn" id="done-continue" href="../">Zur Übersicht</a>
                 </div>
             </section>
 
@@ -219,7 +224,7 @@
                 </div>
                 <div class="message" id="account-message" role="alert"></div>
                 <div class="actions">
-                    <button class="btn btn-step" type="submit" id="account-submit">Weiter</button>
+                    <button class="btn" type="submit" id="account-submit">Weiter</button>
                 </div>
             </form>
 
@@ -231,8 +236,8 @@
                 <p class="code-preview">Ihr Code: <strong id="code-preview">–</strong></p>
                 <div class="message" id="code-message" role="alert"></div>
                 <div class="actions">
-                    <button class="btn btn-step" type="button" id="code-back">Zurück</button>
-                    <button class="btn btn-step" type="submit" id="code-submit" disabled>Weiter</button>
+                    <button class="btn" type="button" id="code-back">Zurück</button>
+                    <button class="btn" type="submit" id="code-submit" disabled>Weiter</button>
                 </div>
             </form>
 
@@ -254,8 +259,8 @@
                 </label>
                 <div class="message" id="confirm-message" role="alert"></div>
                 <div class="actions">
-                    <button class="btn btn-step" type="button" id="confirm-back">Zurück</button>
-                    <button class="btn btn-step" type="submit" id="confirm-submit" disabled>Konto anlegen</button>
+                    <button class="btn" type="button" id="confirm-back">Zurück</button>
+                    <button class="btn" type="submit" id="confirm-submit" disabled>Konto anlegen</button>
                 </div>
             </form>
 
