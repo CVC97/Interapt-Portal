@@ -89,3 +89,29 @@ CREATE TABLE IF NOT EXISTS effort_ratings (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (module_id) REFERENCES modules(id)
 );
+
+-- One row per event of a marked passage (the modules' „Markierungen“): a mark is created, maybe resolved and reopened
+-- (only „unklar“ marks) and maybe deleted, never edited, so the table only gets rows, like the others. The student's
+-- current marks are those created and not deleted (progress/load folds the events in order). event_id and mark_id are
+-- made in the browser (UUIDs), so an event sent twice is stored once. kind: 'important' („Wichtig“) or 'unclear'
+-- („Unklar“), set on create; changing a mark's kind is a delete and a new mark. anchor is the passage as text,
+-- formulas as TeX: {"exact": …, "prefix": …, "suffix": …, "pos": …}; prefix and suffix (up to 30 characters around
+-- it) tell repeated passages apart, pos is where it starts in the page's text. kind/route/subpage/anchor are NULL
+-- for the other actions.
+CREATE TABLE IF NOT EXISTS mark_events (
+  id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id     INT NOT NULL,
+  module_id   INT NOT NULL,
+  event_id    CHAR(36) NOT NULL,
+  mark_id     CHAR(36) NOT NULL,
+  action      ENUM('create', 'delete', 'resolve', 'reopen') NOT NULL,
+  kind        ENUM('important', 'unclear'),
+  route       VARCHAR(100),
+  subpage     VARCHAR(20),
+  anchor      JSON,
+  event_at    DATETIME(3) NOT NULL,
+  received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_mark_event (user_id, module_id, event_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (module_id) REFERENCES modules(id)
+);

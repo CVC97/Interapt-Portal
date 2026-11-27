@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../lib.php';
 
-// POST {module, visits, attempts, ratings} for the logged-in user. The module's start page and its end-of-test page send
+// POST {module, visits, attempts, ratings, marks} for the logged-in user. The module's start page and its end-of-test page send
 // it, and every page on pagehide / when the tab is hidden.
 requireMethod('POST');
 
@@ -34,9 +34,23 @@ function splitPage($page): ?array {
     return [$route, $subpage, $query];
 }
 
+// A marked passage: {exact, prefix, suffix, pos}, the text with formulas as TeX. null if malformed.
+function validAnchor($a): ?array {
+    if (!is_array($a)) return null;
+    $exact  = $a['exact'] ?? null;
+    $prefix = $a['prefix'] ?? '';
+    $suffix = $a['suffix'] ?? '';
+    $pos    = $a['pos'] ?? 0;
+    if (!is_string($exact) || $exact === '' || mb_strlen($exact) > 1000) return null;
+    if (!is_string($prefix) || mb_strlen($prefix) > 60 || !is_string($suffix) || mb_strlen($suffix) > 60) return null;
+    if (!is_int($pos) || $pos < 0) return null;
+    return ['exact' => $exact, 'prefix' => $prefix, 'suffix' => $suffix, 'pos' => $pos];
+}
+
 $visits   = is_array($body['visits']   ?? null) ? $body['visits']   : [];
 $attempts = is_array($body['attempts'] ?? null) ? $body['attempts'] : [];
 $ratings  = is_array($body['ratings']  ?? null) ? $body['ratings']  : [];
+$marks    = is_array($body['marks']    ?? null) ? $body['marks']    : [];
 $skipped  = 0;
 
 $pdo = getDb();
@@ -123,6 +137,48 @@ try {
         ]);
     }
 
+    // Marked passages: create, resolve, reopen and delete events (mark_events in schema.sql).
+    $s = $pdo->prepare(
+        'INSERT INTO mark_events (user_id, module_id, event_id, mark_id, action, kind, route, subpage, anchor, event_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE id = id'
+    );
+    $uuid = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
+    foreach ($marks as $m) {
+        $at      = toDatetime($m['at'] ?? null);
+        $eventId = $m['eventId'] ?? null;
+        $markId  = $m['markId'] ?? null;
+        $action  = $m['action'] ?? null;
+        $kind    = $m['kind'] ?? null;
+        $anchor  = validAnchor($m['anchor'] ?? null);
+        $route   = $m['route'] ?? null;
+        $page    = $m['page'] ?? null;
+        if (
+            $at === null
+            || !is_string($eventId) || !preg_match($uuid, $eventId)
+            || !is_string($markId) || !preg_match($uuid, $markId)
+            || !in_array($action, ['create', 'delete', 'resolve', 'reopen'], true)
+            || ($action === 'create' && (
+                $anchor === null
+                || !in_array($kind, ['important', 'unclear'], true)
+                || !isId($route, 100) || $route[0] !== '/'
+                || ($page !== null && !isId($page, 20))
+            ))
+        ) {
+            $skipped++;
+            continue;
+        }
+        $create = $action === 'create';
+        $s->execute([
+            $userId, $moduleId, strtolower($eventId), strtolower($markId), $action,
+            $create ? $kind : null,
+            $create ? $route : null,
+            $create ? $page : null,
+            $create ? json_encode($anchor, JSON_UNESCAPED_UNICODE) : null,
+            $at,
+        ]);
+    }
+
     $pdo->prepare('UPDATE users SET last_active = UTC_TIMESTAMP(3) WHERE id = ?')->execute([$userId]);
     $pdo->commit();
 } catch (Throwable $e) {
@@ -134,4 +190,6 @@ if ($skipped > 0) {
     error_log("Progress save for user $userId: skipped $skipped malformed rows");
 }
 
-respond(200, ['ok' => true, 'skipped' => $skipped]);
+// accepted: what this version stores. A module keeps rows of a kind queued until the portal lists it, so data sent
+// to an older save.php (which answers 200 and ignores unknown keys) isn't dropped as sent.
+respond(200, ['ok' => true, 'skipped' => $skipped, 'accepted' => ['visits', 'attempts', 'ratings', 'marks']]);

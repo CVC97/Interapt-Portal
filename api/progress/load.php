@@ -53,4 +53,47 @@ $s = $pdo->prepare('SELECT unit_id FROM effort_ratings WHERE user_id = ? AND mod
 $s->execute([$userId, $moduleId]);
 $ratedUnits = array_column($s->fetchAll(), 'unit_id');
 
-respond(200, ['pageVisits' => $pageVisits, 'attempts' => array_values($latest), 'ratedUnits' => $ratedUnits]);
+// Marked passages: those created and not deleted, in the order they were made, each with its kind and, for an
+// „unklar“ mark, when it was set to „geklärt“ (null while open). The events are applied in order.
+$s = $pdo->prepare(
+    'SELECT mark_id, action, kind, route, subpage, anchor, event_at FROM mark_events
+     WHERE user_id = ? AND module_id = ? ORDER BY event_at, id'
+);
+$s->execute([$userId, $moduleId]);
+$current = [];
+$deleted = [];
+foreach ($s->fetchAll() as $e) {
+    $id = $e['mark_id'];
+    if (isset($deleted[$id])) continue;
+    switch ($e['action']) {
+        case 'create':
+            $current[$id] = [
+                'id'         => $id,
+                'kind'       => $e['kind'],
+                'route'      => $e['route'],
+                'page'       => $e['subpage'],
+                'anchor'     => json_decode($e['anchor'], true),
+                'createdAt'  => toIso($e['event_at']),
+                'resolvedAt' => null,
+            ];
+            break;
+        case 'delete':
+            unset($current[$id]);
+            $deleted[$id] = true;
+            break;
+        case 'resolve':
+            if (isset($current[$id])) $current[$id]['resolvedAt'] = toIso($e['event_at']);
+            break;
+        case 'reopen':
+            if (isset($current[$id])) $current[$id]['resolvedAt'] = null;
+            break;
+    }
+}
+$marks = array_values($current);
+
+respond(200, [
+    'pageVisits' => $pageVisits,
+    'attempts'   => array_values($latest),
+    'ratedUnits' => $ratedUnits,
+    'marks'      => $marks,
+]);

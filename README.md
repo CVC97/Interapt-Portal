@@ -40,8 +40,8 @@ All JSON. The login cookie (`interapt_auth`, HttpOnly, `Path=/`) is set by `regi
 | POST | `/api/auth/login` | `{key, username, codename}` | 200 `{username, cohort}` + cookie; 401 no match |
 | POST | `/api/auth/logout` | – | clears the cookie |
 | GET | `/api/auth/me` | – | `{username, cohort}`; 401 = not logged in (guest) |
-| GET | `/api/progress?module=pohl` | – | `{pageVisits, attempts}` of that module, the latest attempt per question |
-| POST | `/api/progress/save` | `{module, visits, attempts}` | `{ok, skipped}`; a row sent twice is stored once |
+| GET | `/api/progress?module=pohl` | – | `{pageVisits, attempts, ratedUnits, marks}` of that module: the latest attempt per question, the units already rated, the marks created and not deleted (with `kind` and `resolvedAt`) |
+| POST | `/api/progress/save` | `{module, visits, attempts, ratings, marks}` | `{ok, skipped, accepted}`; a row sent twice is stored once; `accepted` lists the kinds this version stores |
 
 `module` must be listed under `modules` in `api/config.php` (400 otherwise). The usernames' allowed characters: letters, digits and `. _ - @`.
 
@@ -80,9 +80,11 @@ The modules' deploys now remove their old `pohl/api/` and `precession/api/` from
 
 **A new semester:** add its key to `cohort_keys` in the server's `api/config.php`, e.g. `'ss27' => '…'`. Accounts belong to the semester whose key created them; the same username can be taken again in the next semester (repeating students start fresh). Remove an old key once its students no longer need to log in on a new device; existing logins (cookies) keep working until they expire (200 days).
 
+**New tables** (`effort_ratings` 2026-11-24, `mark_events` 2026-11-27): run `api/schema.sql` again in phpMyAdmin (without its first two lines). Every statement is `CREATE TABLE IF NOT EXISTS`, so only the missing tables are added. Do it before deploying `save.php`, which writes to them.
+
 **A new module:** add its name to `modules` in `api/config.php` (locally and on the server), to `MODULES` in `login/index.html` (title, local port), and a card on `index.html`; the module sets the same name as `MODULE_NAME`.
 
-**Delete a student and all their data** (visits and attempts cascade):
+**Delete a student and all their data** (visits, attempts, ratings and marks cascade):
 ```sql
 DELETE FROM users WHERE cohort = 'ws2627' AND username = 'resonanz42';
 ```
@@ -97,3 +99,28 @@ WHERE u.cohort = 'ws2627'
 ORDER BY u.codename, a.answered_at;
 ```
 Codes are not unique by design (few combinations); check duplicates within a cohort with `SELECT codename, COUNT(*) FROM users WHERE cohort = 'ws2627' GROUP BY codename HAVING COUNT(*) > 1`.
+
+**A student's marked passages** (one row per event; the current marks are those without a delete; `resolved` is 1 for an unclear mark whose last resolve/reopen was a resolve):
+```sql
+SELECT m.name AS module, e.kind, e.route, e.subpage, JSON_UNQUOTE(JSON_EXTRACT(e.anchor, '$.exact')) AS passage, e.event_at,
+       (SELECT r.action = 'resolve' FROM mark_events r WHERE r.user_id = e.user_id AND r.module_id = e.module_id
+          AND r.mark_id = e.mark_id AND r.action IN ('resolve', 'reopen') ORDER BY r.event_at DESC, r.id DESC LIMIT 1) AS resolved
+FROM mark_events e
+JOIN users u ON u.id = e.user_id
+JOIN modules m ON m.id = e.module_id
+WHERE u.cohort = 'ws2627' AND u.username = 'resonanz42' AND e.action = 'create'
+  AND NOT EXISTS (SELECT 1 FROM mark_events d WHERE d.user_id = e.user_id AND d.module_id = e.module_id
+                  AND d.mark_id = e.mark_id AND d.action = 'delete')
+ORDER BY e.event_at;
+```
+
+**Passages marked „Unklar“ most often** (per module and page; which texts students find hard):
+```sql
+SELECT m.name AS module, e.route, e.subpage, JSON_UNQUOTE(JSON_EXTRACT(e.anchor, '$.exact')) AS passage, COUNT(*) AS students
+FROM mark_events e
+JOIN modules m ON m.id = e.module_id
+WHERE e.action = 'create' AND e.kind = 'unclear'
+GROUP BY m.name, e.route, e.subpage, passage
+ORDER BY students DESC
+LIMIT 30;
+```
